@@ -1,0 +1,1 @@
+# bdrc-thumbnail-generator
