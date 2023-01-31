@@ -94,7 +94,7 @@ class BDRCImageDownloader:
 
         return True
 
-    def save_img(self, fp: io.BytesIO, fn: Union[str, Path], img_group_dir: Path):
+    def save_img(self, fp: io.BytesIO, fn: Union[str, Path], work_dir: Path):
         """Save the image in .png format to `img_groupdir/fn
 
         Google Vision API does not support bdrc tiff images.
@@ -104,10 +104,10 @@ class BDRCImageDownloader:
             fn (str): filename
             img_group_dir (Path): directory to save the image
         """
-        output_fn = img_group_dir / fn
+        output_fn = work_dir / fn
         fn = Path(fn)
         if fn.suffix in [".tif", ".tiff", ".TIF"]:
-            output_fn = img_group_dir / f"{fn.stem}.png"
+            output_fn = work_dir / f"{fn.stem}.png"
 
         saved = self.save_img_with_pillow(fp, output_fn)
         if not saved:
@@ -123,24 +123,20 @@ class BDRCImageDownloader:
         with zipfile.ZipFile(zip_file, mode='a') as myzip:
             myzip.write(file_path,arcname=file_path.relative_to(home_path))
 
-    def save_img_group(self, img_group, img_group_dir):
+    def save_img_group(self, img_group, work_dir):
         s3_folder_prefix = buda_api.get_s3_folder_prefix(self.bdrc_scan_id, img_group)
         for img_fn in self.get_s3_img_list(img_group):
             img_path_s3 = Path(s3_folder_prefix) / img_fn
             img_bits = buda_api.gets3blob(str(img_path_s3))
             if img_bits:
-                self.save_img(img_bits, img_fn, img_group_dir)
+                self.save_img(img_bits, img_fn,work_dir)
             break
 
     def download(self):
         bdrc_scan_dir = self.output_dir / self.bdrc_scan_id
         bdrc_scan_dir.mkdir(exist_ok=True, parents=True)
         for img_group_id in self.get_img_groups():
-            img_group_dir = bdrc_scan_dir / img_group_id
-            if img_group_dir.is_dir():
-                continue
-            img_group_dir.mkdir(exist_ok=True, parents=True)
-            self.save_img_group(img_group_id, img_group_dir)
+            self.save_img_group(img_group_id, bdrc_scan_dir)
             break
         return bdrc_scan_dir
     

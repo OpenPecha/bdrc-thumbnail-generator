@@ -2,6 +2,7 @@ from image_downloader import BDRCImageDownloader,_mkdir,DATA_DIR,BASE_PATH
 import github_utils
 from pathlib import Path
 import os
+import csv
 
 
 
@@ -15,9 +16,10 @@ def get_readme(work_id):
     readme = f"{work_id}\n{Table}"
     return readme
 
-def publish_repo(repo_name, asset_paths=None):
-    token = ""
-    read_me = get_readme(repo_name)
+def publish_repo(repo_name, work_id, asset_paths):
+    return 
+    token = "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"
+    read_me = get_readme(work_id)
     local_repo = _mkdir(BASE_PATH / repo_name)
     Path(local_repo / "readme.md").write_text(read_me)
     github_utils.github_publish(
@@ -25,22 +27,34 @@ def publish_repo(repo_name, asset_paths=None):
         message="initial commit",
         not_includes=[],
         layers=[],
-        token=token
+        token=token,
+        description=work_id
        )
-    if asset_paths:
-        github_utils.create_release(
-            repo_name,
-            prerelease=False,
-            asset_paths=asset_paths, 
-            token=token
-        )
+    release_link = github_utils.create_release(
+        repo_name,
+        prerelease=False,
+        asset_paths=asset_paths, 
+        token=token
+
+    )
+    return release_link
+
+def update_catalog(work_id,repo_name,release_link):
+    with open(f"catalog.csv",'a') as f:
+        writer = csv.writer(f)
+        writer.writerow([work_id,repo_name,release_link])
+            
 
 def main():
+    repo_count = 300
     work_ids = Path("work_ids.txt").read_text().splitlines()
     for work_id in work_ids:
+        repo_name = f"OCR{repo_count}"
         download_image(work_id)
         zip_file = Path(f"{DATA_DIR}/zip/{work_id}.zip")
-        publish_repo(work_id,asset_paths=[zip_file])
+        release_link = publish_repo(repo_name,work_id,asset_paths=[zip_file])
+        update_catalog(work_id,repo_name,release_link)
+        repo_count+=1
         break
 
 
