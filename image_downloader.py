@@ -3,7 +3,7 @@ import logging
 import requests
 import rdflib
 import shutil
-
+import zipfile
 from pathlib import Path
 from rdflib import URIRef, Graph
 from rdflib.namespace import Namespace, NamespaceManager
@@ -24,9 +24,10 @@ DATA_DIR = './data'
 
 
 class BDRCImageDownloader:
-    def __init__(self, bdrc_scan_id: str, output_dir: Path) -> None:
+    def __init__(self, bdrc_scan_id: str, output_dir: Path,output_view="zip") -> None:
         self.bdrc_scan_id = bdrc_scan_id
         self.output_dir = output_dir
+        self.output_view = output_view
 
     def get_img_groups(self):
         """
@@ -100,6 +101,15 @@ class BDRCImageDownloader:
         saved = self.save_img_with_pillow(fp, output_fn)
         if not saved:
             self.save_img_with_wand(fp, output_fn)
+        if self.output_view == "zip":
+            self.zip(output_fn)
+    
+
+    def zip(self,file_path):
+        zip_file = "data.zip"
+        with zipfile.ZipFile(zip_file, mode='a') as myzip:
+            myzip.write(file_path)
+
 
     def save_img_group(self, img_group, img_group_dir):
         s3_folder_prefix = buda_api.get_s3_folder_prefix(self.bdrc_scan_id, img_group)
@@ -128,7 +138,7 @@ def zip_img_dir(img_dir):
 
 
 if __name__ == "__main__":
-    downloader = BDRCImageDownloader(bdrc_scan_id="W26071", output_dir=Path(DATA_DIR))
+    downloader = BDRCImageDownloader(bdrc_scan_id="W26071", output_dir=Path(DATA_DIR),output_view = "zip")
     img_dir = downloader.download()
     # img_dir = Path('./data/W1KG26108')
     zip_img_dir(img_dir)
