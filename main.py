@@ -17,6 +17,7 @@ def get_readme(work_id):
     return readme
 
 def publish_repo(repo_name, work_id, asset_paths):
+    return 
     token = "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"
     read_me = get_readme(work_id)
     local_repo = _mkdir(BASE_PATH / repo_name)
