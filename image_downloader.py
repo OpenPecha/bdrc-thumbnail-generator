@@ -102,13 +102,15 @@ class BDRCImageDownloader:
         if not saved:
             self.save_img_with_wand(fp, output_fn)
         if self.output_view == "zip":
+            Path("./data/zip").mkdir(parents=True, exist_ok=True)
             self.zip(output_fn)
     
 
     def zip(self,file_path):
-        zip_file = "data.zip"
+        home_path = Path(f"./data")
+        zip_file = Path(f"./data/zip/{self.bdrc_scan_id}.zip")
         with zipfile.ZipFile(zip_file, mode='a') as myzip:
-            myzip.write(file_path)
+            myzip.write(file_path,arcname=file_path.relative_to(home_path))
 
 
     def save_img_group(self, img_group, img_group_dir):
