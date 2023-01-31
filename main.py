@@ -17,8 +17,7 @@ def get_readme(work_id):
     return readme
 
 def publish_repo(repo_name, work_id, asset_paths):
-    return 
-    token = "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"
+    token = "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"
     read_me = get_readme(work_id)
     local_repo = _mkdir(BASE_PATH / repo_name)
     Path(local_repo / "readme.md").write_text(read_me)
@@ -55,8 +54,6 @@ def main():
         release_link = publish_repo(repo_name,work_id,asset_paths=[zip_file])
         update_catalog(work_id,repo_name,release_link)
         repo_count+=1
-        break
-
 
 if __name__ == "__main__":
     main()   

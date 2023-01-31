@@ -130,14 +130,12 @@ class BDRCImageDownloader:
             img_bits = buda_api.gets3blob(str(img_path_s3))
             if img_bits:
                 self.save_img(img_bits, img_fn,work_dir)
-            break
 
     def download(self):
         bdrc_scan_dir = self.output_dir / self.bdrc_scan_id
         bdrc_scan_dir.mkdir(exist_ok=True, parents=True)
         for img_group_id in self.get_img_groups():
             self.save_img_group(img_group_id, bdrc_scan_dir)
-            break
         return bdrc_scan_dir
     
 
