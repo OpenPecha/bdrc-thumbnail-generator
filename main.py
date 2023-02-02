@@ -1,6 +1,13 @@
-from image_downloader import BDRCImageDownloader
+from image_downloader import BDRCImageDownloader,zip_work_dir,DATA_DIR
 import github_utils
 from pathlib import Path
+from github import Github 
+import os
+import csv
+
+
+
+
 
 def _mkdir(path):
     if path.is_dir():
@@ -9,26 +16,24 @@ def _mkdir(path):
     return path
 
 
-DATA_DIR = './data'
 BASE_PATH = _mkdir(Path.home() / ".openpecha")
-PECHAS_PATH = _mkdir(BASE_PATH / "pechas")
+zip_file_home = _mkdir(Path.home() / ".openpecha/zip")
 
+def download_image(work_id):
+    downloader = BDRCImageDownloader(bdrc_scan_id=work_id, output_dir=Path(DATA_DIR),output_view = "zip")
+    work_dir = downloader.download()
+    return work_dir
 
+def get_readme():
+    zip_url = "adfdf"
+    base_readme = Path("ocr_readme.md").read_text(encoding="utf-8")
+    zip_url = f"[zip_url]: {zip_url}"
+    readme = base_readme + zip_url
+    return base_readme
 
-def download():
-    downloader = BDRCImageDownloader(bdrc_scan_id="W26071", output_dir=Path(DATA_DIR),output_view = "zip")
-    img_dir = downloader.download()
-    # img_dir = Path('./data/W1KG26108')
-
-def get_readme(work_id):
-    work_id = f"|Work Id | {work_id}"
-    Table = "| --- | --- "
-    readme = f"{work_id}\n{Table}"
-    return readme
-
-def publish_repo(repo_name, asset_paths=None):
-    token = "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"
-    read_me = get_readme(repo_name)
+def publish_repo(repo_name, work_id, asset_paths):
+    token = "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"
+    read_me = get_readme()
     local_repo = _mkdir(BASE_PATH / repo_name)
     Path(local_repo / "readme.md").write_text(read_me)
     github_utils.github_publish(
@@ -36,21 +41,57 @@ def publish_repo(repo_name, asset_paths=None):
         message="initial commit",
         not_includes=[],
         layers=[],
-        token=token
+        token=token,
+        description=work_id
        )
-    #res = github_utils.create_github_repo(path=repo_name,org_name=org_name,token=token)
-    if asset_paths:
-        github_utils.create_release(
-            repo_name,
-            prerelease=False,
-            asset_paths=asset_paths, 
-            token=token
-        )
+    release_link = github_utils.create_release(
+        repo_name,
+        prerelease=False,
+        asset_paths=asset_paths, 
+        token=token
+
+    )
+    update_read_me(repo_name,release_link,token)
+
+
+def update_catalog(work_id,repo_name,release_link):
+    with open(f"catalog.csv",'a') as f:
+        writer = csv.writer(f)
+        writer.writerow([work_id,repo_name,release_link])
+
+def update_read_me(repo_name,realease_link,token):
+    g = Github(token)
+    readme = get_remote_readme(g,repo_name)
+    readme+=f"[zip_url]: {realease_link}"
+    try:
+        commit_msg = "updated readme"
+        repo = g.get_repo(f"MonlamAI/{repo_name}")
+        contents = repo.get_contents(f"readme.md", ref="master")
+        repo.update_file(contents.path, commit_msg, readme, sha=contents.sha, branch="master")
+    except Exception as e:
+        print(e)
+
+def get_remote_readme(g,repo_name):
+    try:
+        repo = g.get_repo(f"MonlamAI/{repo_name}")
+        contents = repo.get_contents(f"readme.md")
+        return contents.decoded_content.decode()
+    except:
+        print('Repo Not Found')
+        return None
+
+
+def main():
+    repo_count = 300
+    work_ids = Path("work_ids.txt").read_text().splitlines()
+    for work_id in work_ids:
+        repo_name = f"OCR_Demo"
+        work_dir = download_image(work_id)
+        zip_file = zip_work_dir(work_dir)
+        release_link = publish_repo(repo_name,work_id,asset_paths=[zip_file])
+        update_catalog(work_id,repo_name,release_link)
+        repo_count+=1
+        break
 
 if __name__ == "__main__":
-    assets = [Path("W26071.zip")]
-    publish_repo("W26071",asset_paths=assets)
-    
-
-
-    
+    main()   

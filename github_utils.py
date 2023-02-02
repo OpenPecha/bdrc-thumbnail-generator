@@ -28,7 +28,7 @@ def get_github_repo(repo_name, org_name, token):
 
 def create_github_repo(path, org_name, token, private=False, description=None):
     org = _get_openpecha_data_org(org_name, token)
-    repo = org.create_repo(path.stem, description=" ", private=private, has_wiki=False, has_projects=False)
+    repo = org.create_repo(path.stem, description=description, private=private, has_wiki=False, has_projects=False)
     time.sleep(2)
     return repo._html_url.value
 
@@ -117,6 +117,7 @@ def create_orphan_branch(repo_path, branch_name, parent_branch="master", type_="
 
 def github_publish(
     path,
+    description,
     message=None,
     not_includes=None,
     layers=[],
@@ -125,7 +126,7 @@ def github_publish(
     private=False
 ):
     path = Path(path)
-    remote_repo_url = create_github_repo(path, org, token, private)
+    remote_repo_url = create_github_repo(path, org, token, private,description)
     local_repo = create_local_repo(path, remote_repo_url, org, token)
     commit(local_repo, message, not_includes)
     local_repo.git.checkout("-b", "review")
@@ -176,6 +177,7 @@ def _add_tag_in_filename(path, tag_name):
 
 
 def upload_assets(release, tag_name=None, asset_paths=[]):
+    
     if not tag_name:
         tag_name = release.tag_name
     download_url = ""
