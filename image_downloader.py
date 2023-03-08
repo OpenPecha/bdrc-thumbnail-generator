@@ -35,10 +35,9 @@ zip_file_home = _mkdir(Path.home() / ".openpecha/zip")
 
 
 class BDRCImageDownloader:
-    def __init__(self, bdrc_scan_id: str, output_dir: Path,output_view="zip") -> None:
+    def __init__(self, bdrc_scan_id: str, output_dir: Path) -> None:
         self.bdrc_scan_id = bdrc_scan_id
         self.output_dir = output_dir
-        self.output_view = output_view
 
     def get_img_groups(self):
         """
@@ -112,9 +111,6 @@ class BDRCImageDownloader:
         saved = self.save_img_with_pillow(fp, output_fn)
         if not saved:
             self.save_img_with_wand(fp, output_fn)
-        if self.output_view == "zip":
-            Path(f"{DATA_DIR}/zip").mkdir(parents=True, exist_ok=True)
-            self.zip(output_fn)
     
 
     def zip(self,file_path):
@@ -137,6 +133,7 @@ class BDRCImageDownloader:
         for img_group_id in self.get_img_groups():
             self.save_img_group(img_group_id, bdrc_scan_dir)
         return bdrc_scan_dir
+        
     
 
 def zip_img_dir(img_dir):
